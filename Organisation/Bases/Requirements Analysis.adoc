@@ -1,0 +1,75 @@
+= REQUIREMENTS ANALYSIS
+
+Conceive a lite library of Machine learning who gives basics  ML algorithms for the user.
+
+== FUNCTIONALITIES
+* Make a simple linear regression
+* Make a logistic regressor
+* Algorithms for regression
+* Algorithms for classification
+* Metrics for regression
+* Metrics for classification
+
+[options="Complexity/Importance Table"]
+|===
+|Tasks|Importance|Complexity
+|Linear Regression|4|1
+|Logistic Regression|5|5
+|KNN Classifier|3|3
+|KNN Regressor|3|2
+|K-Mean Cluster|4|4
+|Classification metrics|4|2
+|Regression metrics|4|3
+|===
+
+== *MoSCoW*
+
+=== Algorithm Models
+
+==== Regression
+. Must have: A linear regressor, KNN Regressor
+. Should have: Tree Regressor, Random Forest Regressor, Boosting, Stacking, Gradient Boosting
+. Would have:Polynomial regressor
+. Won't have: SVM regressor
+
+==== Classification
+. Must have: Logistic Regression
+. Should have: Tree Classifier, Random Forest Classifier, Boosting, Stacking, Gradient Boosting
+. Would have: KNN Regressor
+. Won't have: SVM Classifier
+
+==== Clustering
+. Must have: K-Mean Clustering
+. Should have: Isolation Forest
+. Would have: DBSCAN
+. Won't have: Kernel Density
+
+=== Metrics
+
+==== Classification
+. Must have: Accuracy, F1-score, Sensibility, Precision, Confusion Matrice
+. should have:
+. Would have: Specificity
+. Won't have: ROC-AUR, AUC-PR
+
+=== Regression
+. Must have: MSE, RMSE, MAE
+. Should have: MSLE
+. Would have: MAPE, R2
+. Won't have: SMAPE, Adjusted R2
+
+== Use case
+
+=== Story
+ As a user, I would want to create a classification or regressor models to solve several types of problems.
+ After my model trained, I would use different metrics to evaluate my model either is a classification or a regression model.
+
+=== Technical tasks
+* Create a model
+* Fit it with train data
+* Select loss function
+* Select different metrics
+* Use it to the model with the test data
+* Plot the result
+
+
