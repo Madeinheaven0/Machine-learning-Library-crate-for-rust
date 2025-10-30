@@ -1,3 +1,3 @@
-mod classification;
-mod clustering;
-mod regression;
+pub mod classification;
+pub mod clustering;
+pub mod regression;

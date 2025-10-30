@@ -1,1 +1,2 @@
-mod linear;
+pub mod linear;
+pub mod metrics;

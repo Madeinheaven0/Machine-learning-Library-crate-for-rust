@@ -1,1 +1,2 @@
 mod linear;
+mod knn;

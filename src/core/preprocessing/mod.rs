@@ -1,1 +1,2 @@
 mod norm;
+mod class;
