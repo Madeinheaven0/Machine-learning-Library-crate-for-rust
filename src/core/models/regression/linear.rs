@@ -1,23 +1,23 @@
-use std::fmt::Debug;
-use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
+use crate::core::metrics::regression::metrics::EvaluationMetrics;
 use crate::errors::DataError;
 use ndarray::{Array1, Array2};
 use ndarray_rand::RandomExt;
 use ndarray_rand::rand_distr::Normal;
 use ndarray_rand::rand_distr::num_traits::real::Real;
+use std::fmt::Debug;
+use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 
 pub struct LinearRegression<T>
 where
-T: Add + Sub +
-Mul + Div +
-Rem + Neg +
-PartialOrd + PartialEq +
-Clone + Debug,{
+    T: Add + Sub + Mul + Div + Rem + Neg + PartialOrd + PartialEq + Clone + Debug,
+{
     pub weights: Option<Array1<T>>,
     pub bias: Option<f64>,
 }
 
-impl<T> LinearRegression<T> {
+impl<T: Add + Sub + Mul + Div + Rem + Neg + PartialOrd + PartialEq + Clone + Debug>
+    LinearRegression<T>
+{
     pub fn new() -> Self {
         Self {
             weights: None,
@@ -57,17 +57,17 @@ impl<T> LinearRegression<T> {
 
         // Initialisation
         let mut weights = Array1::random(&n_samples, Normal::new(0., 1.).unwrap());
-        let mut bias = 0.0;
+        let mut bias = Array1::zeros(&n_samples);
 
         for iteration in 0..n_iter {
-            let prediction = x.dot(&weights) + bias;
+            let prediction = x.dot(&weights) + &bias;
 
             // Erreur
             let error = &prediction - y;
 
             // Gradients
             let weight_gradient = x.t().dot(&error) / n_samples;
-            let bias_gradient = error.sum() / n_samples;
+            let bias_gradient = error / n_samples;
 
             // Mise à jour
             weights = &weights - &(&weight_gradient * lr);
@@ -122,26 +122,15 @@ impl<T> LinearRegression<T> {
         }
     }
 
-    pub fn predict(&self, x: &Array2<T>) -> Array1<T> {
+    pub fn predict(&self, x: &Array2<T>) -> Predictions<T> {
         match (&self.weights, self.bias) {
-            (Some(weights), Some(bias)) => x.dot(weights) + bias,
+            (Some(weights), Some(bias)) => Predictions{predictions: x.dot(weights) + bias},
             _ => panic!("Model not fitted. Call fit() first."),
         }
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct EvaluationMetrics<T> {
-    pub mse: T,
-    pub r_squared: T,
-    pub mae: T,
-}
 
-impl<T> EvaluationMetrics<T> {
-    pub fn print(&self) {
-        println!("Evaluation Metrics:");
-        println!("  MSE: {:.6}", self.mse);
-        println!("  R²:  {:.6}", self.r_squared);
-        println!("  MAE: {:.6}", self.mae);
-    }
+pub struct Predictions<T> {
+    predictions: Array1<T>
 }

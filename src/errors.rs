@@ -13,4 +13,8 @@ pub enum DataError {
     EmptyTarget,
     #[error("Presence of Nan values")]
     NaNData,
+    #[error("The model is not fitted")]
+    NoteFittedModel,
+    #[error("The available metrics is Manhattan and Euclidean")]
+    InvalidMetric,
 }
