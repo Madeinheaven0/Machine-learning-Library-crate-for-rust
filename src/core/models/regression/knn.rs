@@ -132,4 +132,81 @@ where
 
         Ok(predictions)
     }
+
+    fn predict(&self, x_test: Array1<T>) -> Result<Array1<T>, DataError> {
+        validation_features(&x_test)?;
+
+        let mut predictions = Array1::zeros(x_test.shape()[0]);
+        let k = self.k.ok_or(DataError::NoteFittedModel);
+
+        for i in 0..x_test.shape()[0] {
+            let test_sample = x_test.row(i);
+            let n_train = x_test.shape()[0];
+
+            //--- 1. Compute the distance on the base of the metrics
+            let distances_array: Array1<T> = match self.metrics {
+                // Euclidean distance (L2) : sqrt(sum((a_1 - b_i) ^ 2))
+                Distance::Euclidean => x_test
+                    .outer_iter()
+                    .map(|train_sample| {
+                        let diff = &test_sample - &train_sample;
+
+                        diff.map(|x| x.powi(2)).sum()
+                    })
+                    .collect(),
+
+                Distance::Manhattan => x_test
+                    .outer_iter()
+                    .map(|train_sample| {
+                        let diff = &test_sample - &train_sample;
+                        diff.map(|x| x.abs()).sum()
+                    })
+                    .collect(),
+
+                _ => Err(DataError::InvalidMetric),
+            };
+
+            let mut indexed_distances: Vec<(T, usize)> = distances_array
+                .into_iter()
+                .enumerate()
+                .map(|(index, dist)| (dist.clone(), index))
+                .collect();
+
+            // sort by distance
+            indexed_distances.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+
+            let limit = k.min(n_train);
+            let k_nearest_indices: Vec<usize> = indexed_distances
+                .into_iter()
+                .take(limit)
+                .map(|(_, index)| index)
+                .collect();
+
+            let mut sum = T::zero();
+            for &index in k_nearest_indices.iter() {
+                sum = sum + predictions[[index]].clone();
+            }
+
+            let mean = sum / T::from(&limit).unwrap();
+            predictions[[i]] = mean;
+        }
+
+        Ok(predictions)
+    }
+
+    pub fn evaluate(
+        &self,
+        y_test: &Array2<T>,
+        y_pred: &Array1<T>,
+    ) -> Result<EvaluationMetrics<T>, DataError> {
+        validation_mix(y_test, y_pred)?;
+
+        Ok(
+            EvaluationMetrics {
+                mse: mse(&y_test, &y_pred),
+                r_squared: rmse(&y_test, &y_pred),
+                mae: mean_absolute_error(&y_test, &y_pred),
+            }
+        )
+    }
 }
