@@ -79,8 +79,7 @@ where
         let x_train = self.x_train.as_ref().ok_or(DataError::NoteFittedModel)?;
         let y_train = self.y_train.as_ref().ok_or(DataError::NoteFittedModel)?;
 
-        let n_test = x_test.shape()[0];
-        let mut predictions = Array1::zeros(n_test);
+        let mut predictions = Array1::zeros(y_train.shape()[0]);
 
         //--- 1. Compute the distances on the base of the metrics
         for i in 0..n_test {
