@@ -124,13 +124,14 @@ impl<T: Add + Sub + Mul + Div + Rem + Neg + PartialOrd + PartialEq + Clone + Deb
 
     pub fn predict(&self, x: &Array2<T>) -> Predictions<T> {
         match (&self.weights, self.bias) {
-            (Some(weights), Some(bias)) => Predictions{predictions: x.dot(weights) + bias},
+            (Some(weights), Some(bias)) => Predictions {
+                predictions: x.dot(weights) + bias,
+            },
             _ => panic!("Model not fitted. Call fit() first."),
         }
     }
 }
 
-
 pub struct Predictions<T> {
-    predictions: Array1<T>
+    predictions: Array1<T>,
 }

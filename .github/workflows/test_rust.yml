@@ -1,0 +1,42 @@
+# .gitHub/workflows/test_rust.yml
+
+name: Rust CI (Compilation et Tests)
+
+# 1. Event (When the workflow must be start ?)
+on:
+  push:
+    branches: [ "master" ] # Execute when we push in the  'master'
+  pull_request:
+    branches: [ "master" ] # Execute when a PR is opened on 'master'
+
+# 2. Jobs (Tasks to do)
+jobs:
+  build_and_test:
+    # The environment where the job is executed (a virtual machine)
+    runs-on: ubuntu-latest
+
+    # The steps of the job
+    steps:
+      # Step 1 : bring back the code of the depository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2 : Configure the rust environment
+      # Install the good compiler and add the necessary tools
+      - name: Install latest stable Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable # Use the stable version of Rust
+          components: rustfmt, clippy # Optional: Add the formatting and analysis tools
+
+      # Step 3 : Compiler the project (Vérify if the code is valid)
+      - name: Build
+        run: cargo build --verbose
+
+      # Step 4 : Execute units tests
+      - name: Run tests
+        run: cargo test --verbose
+
+      # Step 5 (Optional) : Execute Clippy for a code de analysis
+      - name: Run Clippy analysis
+        run: cargo clippy -- -D warnings
