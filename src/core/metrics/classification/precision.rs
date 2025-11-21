@@ -1,8 +1,8 @@
+use crate::core::metrics::classification::recall::{RecallClass, RecallFloat};
 use crate::errors::DataError;
 use ndarray::Array1;
 use std::collections::HashSet;
 use std::hash::Hash;
-use crate::core::metrics::classification::recall::{RecallClass, RecallFloat};
 
 /// Compute the  Precision for a given positive class.
 ///
@@ -37,7 +37,7 @@ where
 
         if is_predicted_positive {
             if y_t == positive_class {
-               // The case was predicted to be positive AND is actually positive.
+                // The case was predicted to be positive AND is actually positive.
                 true_positives += 1; // VP
             } else {
                 // The case was predicted to be positive BUT is actually negative.
@@ -98,7 +98,7 @@ where
 
     // 3. Calculate the average
     if valid_classes_count == 0 {
-        return Ok(T::zero()) // No class with which to calculate the average;
+        return Ok(T::zero()); // No class with which to calculate the average;
     }
 
     let n_classes_t = T::from_usize(valid_classes_count).ok_or(DataError::InvalidData)?;

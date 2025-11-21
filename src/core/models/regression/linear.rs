@@ -10,7 +10,15 @@ use std::fmt::Debug;
 
 pub struct LinearRegression<T>
 where
-    T: Float + FromPrimitive + LinalgScalar + Dot<T, Output = Array1<T>> + Debug + ScalarOperand + 'static + Zero + One,
+    T: Float
+        + FromPrimitive
+        + LinalgScalar
+        + Dot<T, Output = Array1<T>>
+        + Debug
+        + ScalarOperand
+        + 'static
+        + Zero
+        + One,
 {
     pub weights: Option<Array1<T>>,
     pub bias: Option<f64>,
@@ -18,7 +26,13 @@ where
 
 impl<T> LinearRegression<T>
 where
-    T: Float + FromPrimitive + LinalgScalar + Dot<T, Output = Array1<T>> + Debug + ScalarOperand + 'static,
+    T: Float
+        + FromPrimitive
+        + LinalgScalar
+        + Dot<T, Output = Array1<T>>
+        + Debug
+        + ScalarOperand
+        + 'static,
 {
     pub fn new() -> Self {
         Self {
@@ -115,7 +129,9 @@ where
         let n_samples = T::from_usize(y_test.len()).ok_or(DataError::InvalidData)?;
 
         // Mean Squared Error
-        let mse = predictions.predictions.iter() // Utilisez le champ Array1<T> interne
+        let mse = predictions
+            .predictions
+            .iter() // Use the internal Array1<T> field
             .zip(y_test.iter());
 
         // R-squared
@@ -126,7 +142,11 @@ where
             .zip(y_test.iter())
             .map(|(pred, actual)| (actual - pred).powi(2))
             .sum::<f64>();
-        let r_squared = if tss == T::zero() { T::one() } else { T::one() - (rss / tss) };
+        let r_squared = if tss == T::zero() {
+            T::one()
+        } else {
+            T::one() - (rss / tss)
+        };
 
         // Mean Absolute Error
         let mae = predictions

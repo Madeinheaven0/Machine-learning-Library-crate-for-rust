@@ -1,5 +1,5 @@
-use thiserror::Error;
 use ndarray_stats::errors::MinMaxError;
+use thiserror::Error;
 
 impl From<MinMaxError> for DataError {
     fn from(error: MinMaxError) -> Self {
@@ -27,5 +27,5 @@ pub enum DataError {
     #[error("Invalid data")]
     InvalidData,
     #[error("{0}")]
-    MinMaxComputationError(String)
+    MinMaxComputationError(String),
 }

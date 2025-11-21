@@ -2,7 +2,10 @@ use crate::errors::DataError;
 use ndarray::{ArrayBase, Dim};
 use num_traits::Float;
 
-pub fn validation_shape_2d_1d<T, S1, S2>(x: &ArrayBase<S1, Dim<[usize; 2]>>, y: &ArrayBase<S2, Dim<[usize; 1]>>) -> Result<(), DataError>
+pub fn validation_shape_2d_1d<T, S1, S2>(
+    x: &ArrayBase<S1, Dim<[usize; 2]>>,
+    y: &ArrayBase<S2, Dim<[usize; 1]>>,
+) -> Result<(), DataError>
 where
     T: Float,
     S1: ndarray::Data<Elem = T>,

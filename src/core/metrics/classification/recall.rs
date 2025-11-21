@@ -62,7 +62,7 @@ where
 
         if is_actual_positive {
             if is_predicted_positive {
-               // The case was actually positive AND was predicted to be positive.
+                // The case was actually positive AND was predicted to be positive.
                 true_positives += 1; // VP
             } else {
                 // The case was actually positive BUT was predicted to be negative
