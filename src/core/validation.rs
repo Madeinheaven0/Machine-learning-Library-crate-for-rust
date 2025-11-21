@@ -1,49 +1,35 @@
 use crate::errors::DataError;
-use ndarray::{Array1, Array2};
+use ndarray::{ArrayBase, Dim};
 use num_traits::Float;
 
-pub fn validation_mix<T: Float + PartialOrd + PartialEq>(
-    x: &Array2<T>,
-    y: &Array1<T>,
-) -> Result<(), DataError> {
-    if x.is_empty() || y.is_empty() {
-        return Err(DataError::EmptyData);
-    }
-
-    if x.shape()[0] != y.shape()[0] {
-        return Err(DataError::DimensionMismatch(x.shape()[0], y.shape()[0]));
-    }
-
-    if x.iter().any(|&x| x.is_nan()) || y.iter().any(|&x| x.is_nan()) {
-        return Err(DataError::NaNData);
-    }
-
-    Ok(())
-}
-
-pub fn validation_features<T: Float + PartialOrd + PartialEq>(
-    x: &Array2<T>,
-) -> Result<(), DataError> {
+pub fn validation_shape_2d_1d<T, S1, S2>(x: &ArrayBase<S1, Dim<[usize; 2]>>, y: &ArrayBase<S2, Dim<[usize; 1]>>) -> Result<(), DataError>
+where
+    T: Float,
+    S1: ndarray::Data<Elem = T>, // T doit être le type des éléments
+    S2: ndarray::Data<Elem = T>,
+{
+    // --- 1. Vérification des données vides ---
     if x.is_empty() {
         return Err(DataError::EmptyData);
     }
 
-    if x.iter().any(|&x| x.is_nan()) {
-        return Err(DataError::NaNData);
-    }
-
-    Ok(())
-}
-
-pub fn validation_target<T: Float + PartialOrd + PartialEq>(
-    y: &Array1<T>,
-) -> Result<(), DataError> {
     if y.is_empty() {
         return Err(DataError::EmptyTarget);
     }
 
-    if y.iter().any(|&x| x.is_nan()) {
+    // --- 2. Vérification des NaN (Not a Number) ---
+    // Utilise le trait Float pour appeler .is_nan() sur chaque élément de X.
+    if x.iter().any(|&e| e.is_nan()) {
         return Err(DataError::NaNData);
+    }
+
+    // --- 3. Vérification de la correspondance des dimensions (Échantillons) ---
+    let n_samples_x = x.shape()[0]; // Nombre de lignes dans X
+    let n_samples_y = y.shape()[0]; // Nombre d'éléments dans Y
+
+    if n_samples_x != n_samples_y {
+        // Retourne une erreur DimensionMismatch indiquant les tailles trouvées.
+        return Err(DataError::DimensionMismatch(n_samples_x, n_samples_y));
     }
 
     Ok(())

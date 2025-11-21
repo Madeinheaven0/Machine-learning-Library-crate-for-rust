@@ -1,11 +1,30 @@
 use super::class::PreprocessorClass;
 use crate::errors::DataError;
-use ndarray::{Array, Array1, Array2, Axis, Dimension};
+use ndarray::{Array1, Array2, Axis, ScalarOperand};
 use ndarray_stats::QuantileExt;
 use num_traits::Float;
 use std::fmt::Debug;
 use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 
+pub trait MyScalar:
+// Arithmetic operations: (Type op Type) must return the same Type
+Add<Self, Output = Self> +
+Sub<Self, Output = Self> +
+Mul<Self, Output = Self> +
+Div<Self, Output = Self> +
+Rem<Self, Output = Self> +
+Neg<Output = Self> +
+
+// Other required traits
+PartialOrd +
+PartialEq +
+Clone +
+Debug +
+Float + // Float often involves arithmetic
+ScalarOperand +
+'static
+{
+}
 // This function calculates a quantile (Q1, Median, Q3) for an Array1<A>
 // The 'q' is the position, e.g., 0.5 for the median, 0.25 for Q1.
 fn quantile<A>(arr: &Array1<A>, q: f64) -> A
@@ -31,7 +50,7 @@ where
 
 fn standard_scaler<A>(arr: &Array2<A>) -> Result<Array2<A>, DataError>
 where
-    A: Add + Sub + Mul + Div + Rem + Neg + PartialOrd + PartialEq + Clone + Debug + Float,
+    A: MyScalar + num_traits::FromPrimitive + Float,
 {
     if arr.is_empty() {
         return Err(DataError::EmptyData);
@@ -59,7 +78,7 @@ where
 
 fn minmax_scaler<A>(arr: &Array2<A>) -> Result<Array2<A>, DataError>
 where
-    A: Add + Sub + Mul + Div + Rem + Neg + PartialOrd + PartialEq + Clone + Debug,
+    A: MyScalar + num_traits::FromPrimitive + Float,
 {
     if arr.is_empty() {
         return Err(DataError::EmptyData);
@@ -72,7 +91,7 @@ where
             let min = arr.min()?.clone();
             let max = arr.max()?.clone();
 
-            Ok((arr - &min) / (max - min))
+            Ok((arr - min) / (max - min))
         }
         2 => {
             let min = arr
@@ -92,7 +111,7 @@ where
 
 fn robust_scaler<A>(arr: &Array2<A>) -> Result<Array2<A>, DataError>
 where
-    A: Float + Add + Sub + Mul + Div + Rem + Neg + PartialOrd + PartialEq + Clone + Debug,
+    A: MyScalar,
 {
     if arr.is_empty() {
         return Err(DataError::EmptyData);

@@ -19,7 +19,7 @@ pub struct EvaluationMetrics<T> {
     pub mae: T,
 }
 
-impl<T> EvaluationMetrics<T> {
+impl<T: std::fmt::Display> EvaluationMetrics<T> {
     pub fn print(&self) {
         println!("Evaluation Metrics:");
         println!("  MSE: {:.6}", self.mse);

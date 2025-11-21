@@ -1,18 +1,21 @@
 use crate::core::metrics::regression::metrics::Distance;
-use crate::core::validation::*;
 use crate::errors::DataError;
-use ndarray::prelude::*;
 use ndarray::{Array1, Array2};
 use num_traits::Float;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
-use std::ops::{Add, Div, Mul, Neg, Rem, Sub};
 
+// Definition of the composite stroke for clarity
+pub trait KNNFloat: Float + Clone + Debug {}
+impl KNNFloat for f32 {}
+impl KNNFloat for f64 {}
+
+// Definition of the structure with simplified constraints
 pub struct KNNClassifier<T, C>
 where
-    T: Float + Clone + Debug + PartialOrd + PartialEq, // T pour les features (distances)
-    C: Eq + Hash + Clone + Debug,                      // C pour les classes
+    T: KNNFloat,
+    C: Eq + Hash + Clone + Debug,
 {
     pub metrics: Distance,
     pub x_train: Option<Array2<T>>,
@@ -22,7 +25,7 @@ where
 
 impl<T, C> KNNClassifier<T, C>
 where
-    T: Float + Add + Sub + Mul + Div + Rem + Neg + PartialOrd + PartialEq + Clone + Debug,
+    T: KNNFloat,
     C: Eq + Hash + Clone + Debug,
 {
     pub fn new(metrics: Distance) -> Self {
@@ -34,11 +37,20 @@ where
         }
     }
 
-    // Stores the features (Array2<T>) and the targets (Array1<C>)
+    /// Stores the features (Array2<T>) and the targets (Array1<C>)
     pub fn fit(&mut self, x: Array2<T>, y: Array1<C>, k: usize) -> Result<(), DataError> {
-        validation_mix(&x, &y)?;
+        // CORRECTION: validation_shape_2d_1d expects an Array2 and an Array1.
+        // Array1<C> should implement T:Float, which it doesn't.
+        // The same validation cannot be reused for C.
+        // A simpler function is needed to validate x:Array2<T> and y:Array1<C>
+        // I'm using the simple validation body for the demo:
+        if x.shape()[0] != y.shape()[0] {
+            return Err(DataError::DimensionMismatch(x.shape()[0], y.shape()[0]));
+        }
+        if x.iter().any(|&e| e.is_nan()) {
+            return Err(DataError::NaNData);
+        }
 
-        // Data storage (Mémorisation des données)
         self.x_train = Some(x);
         self.y_train = Some(y);
         self.k = Some(k);
@@ -46,8 +58,9 @@ where
         Ok(())
     }
 
-    // Makes predictions for a new dataset (x_test)
-    pub fn predict(&self, x_test: Array2<T>) -> Result<Array1<C>, DataError> {
+    /// Makes predictions for a new dataset (x_test)
+    pub fn predict(&self, x_test: &Array2<T>) -> Result<Array1<C>, DataError> {
+        // Correction: take x_test by reference
         // 1. Verification of the trained model
         let x_train = self.x_train.as_ref().ok_or(DataError::NoteFittedModel)?;
         let y_train = self.y_train.as_ref().ok_or(DataError::NoteFittedModel)?;
@@ -62,16 +75,13 @@ where
         }
 
         // Initializing the prediction array (Array1<C>)
-
-        // Requires cloning an existing class to initialize the array
-        let default_class = y_train.get([0]).ok_or(DataError::NoteFittedModel)?.clone();
-        let mut predictions = Array1::from_elem(x_test.shape()[0], default_class);
+        let mut predictions = Array1::uninit(x_test.shape()[0]);
 
         // Loop through each test sample
         for i in 0..x_test.shape()[0] {
             let test_sample = x_test.row(i);
 
-            // --- 2. Calculating Distances (Same as Regression) ---
+            // --- 2. Calculating Distances (Lógica idéntica al Regressor) ---
 
             let distances_array: Array1<T> = match self.metrics {
                 Distance::Euclidean => x_train
@@ -95,47 +105,46 @@ where
 
             // --- 3. Sorting and Selecting Neighbors ---
 
-            // Associates each distance with its index (distance, index)
             let mut indexed_distances: Vec<(T, usize)> = distances_array
                 .into_iter()
                 .enumerate()
                 .map(|(index, dist)| (dist.clone(), index))
                 .collect();
 
-            // Sort by increasing distance (smallest first)
             indexed_distances.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
 
             let limit = k_val.min(n_train);
 
-            // Isolates the indices of the K nearest neighbors
             let k_nearest_indices: Vec<usize> = indexed_distances
                 .into_iter()
                 .take(limit)
                 .map(|(_, index)| index)
                 .collect();
 
-            // --- 4. Classification Vote (Key Difference) ---
+            // --- 4. Classification Vote (Mode) ---
 
             let mut class_counts: HashMap<C, usize> = HashMap::new();
 
-            // Count the votes of the K neighbors in y_train
             for &index in k_nearest_indices.iter() {
                 let class = y_train[[index]].clone();
-                // Increments the counter for this class
                 *class_counts.entry(class).or_insert(0) += 1;
             }
 
-            // Determine the majority class
-            // .max_by_key finds the class with the largest 'count'
-            let (predicted_class, _) = class_counts
+            // Determine the majority class (the one with max count)
+            let predicted_class = class_counts
                 .into_iter()
                 .max_by_key(|&(_, count)| count)
-                .ok_or(DataError::DimensionMismatch(1, 1))?;
+                .map(|(class, _)| class)
+                .ok_or(DataError::EmptyData)?; // Correction: Si la liste des voisins est vide (impossible si n_train > 0)
 
             // 5. Store the prediction
-            predictions[[i]] = predicted_class.clone();
+            // CORRECTION: Utiliser le unsafe .assume_init() après avoir assigné une valeur
+            unsafe {
+                predictions.as_slice_mut().unwrap()[i] = predicted_class.clone();
+            }
         }
 
-        Ok(predictions)
+        // Finalisation : Convertir l'Array uninitialized en Array initialisé
+        Ok(unsafe { predictions.assume_init() })
     }
 }

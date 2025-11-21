@@ -1,4 +1,11 @@
 use thiserror::Error;
+use ndarray_stats::errors::MinMaxError;
+
+impl From<MinMaxError> for DataError {
+    fn from(error: MinMaxError) -> Self {
+        DataError::MinMaxComputationError(error.to_string())
+    }
+}
 
 #[derive(Debug, Error)]
 pub enum DataError {
@@ -17,4 +24,8 @@ pub enum DataError {
     NoteFittedModel,
     #[error("The available metrics is Manhattan and Euclidean")]
     InvalidMetric,
+    #[error("Invalid data")]
+    InvalidData,
+    #[error("{0}")]
+    MinMaxComputationError(String)
 }
